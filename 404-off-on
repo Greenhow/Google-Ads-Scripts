@@ -1,0 +1,58 @@
+/*
+This script is available under the GNU GENERAL PUBLIC LICENSE, Version 3.
+Copyright (C) 2023 Greenhow Digital (hello@greenhowdigital.com)
+*/
+
+function main() {
+  
+  // SET URL ARRAY
+  var checkedURLs = [];
+  var brokenURLs = [];
+  var reenabledURLs = []; // Added array to store re-enabled URLs
+  
+  // ITERATE THROUGH ADS AND GET FINAL URL
+  var adIterator = AdWordsApp.ads()
+  .withCondition("Status = ENABLED")
+  .withCondition("AdGroupStatus = ENABLED")
+  .withCondition("CampaignStatus = ENABLED")
+  .get();
+  
+  while (adIterator.hasNext()) {
+    var ad = adIterator.next()
+    var finalURL = ad.urls().getFinalUrl();
+    
+    // CHECK NEW FINAL URL
+    if (checkedURLs.indexOf(finalURL) < 0) {
+      checkedURLs.push(finalURL);
+      var responseCode = Number(UrlFetchApp.fetch(finalURL).getResponseCode());
+      
+      // LOG BAD URL
+      if (responseCode > 302) {
+        brokenURLs.push(finalURL);
+        Logger.log(finalURL);
+      } else {
+        // URL is live again, re-enable the ad
+        reenabledURLs.push(finalURL);
+        ad.enable(); // Re-enables the ad
+      }
+    }
+  }
+  
+  // PAUSE ADS WITH BAD URLS
+  if (brokenURLs.length > 0) {
+    for (var x = 0; x < brokenURLs.length; x++) {
+      var brokenURL = brokenURLs[x];
+      
+      var brokenAdIterator = AdWordsApp.ads()
+      .withCondition("Status = ENABLED")
+      .withCondition("AdGroupStatus = ENABLED")
+      .withCondition("CampaignStatus = ENABLED")
+      .withCondition("CreativeFinalUrls = '" + brokenURL + "'");
+      
+      while (brokenAdIterator.hasNext()) {
+        var brokenAd = brokenAdIterator.next();
+        brokenAd.pause();
+      }
+    }
+  }
+}
