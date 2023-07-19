@@ -1,3 +1,8 @@
+/*
+This script is available under the GNU GENERAL PUBLIC LICENSE, Version 3.
+Copyright (C) 2023 Greenhow Digital (hello@greenhowdigital.com)
+*/
+
 var SPREADSHEET_ID = 'GOOGLE DOCS';  // <-- replace with your Google Sheets ID
 var WEATHER_API_KEY = "KEY";  // <-- replace with your weatherapi.com API key
 
