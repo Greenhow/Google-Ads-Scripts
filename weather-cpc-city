@@ -1,0 +1,76 @@
+var SPREADSHEET_ID = 'GOOGLE DOCS';  // <-- replace with your Google Sheets ID
+var WEATHER_API_KEY = "KEY";  // <-- replace with your weatherapi.com API key
+
+function main() {
+  // Get the cities from the Google Sheet
+  var citiesList = getCitiesFromSheet();
+  
+  // Get the weather CPCs from the Google Sheet
+  var weatherCPCs = getWeatherCPCs();
+  
+  // Get ad groups with the specific label
+  var adGroupSelector = AdsApp
+      .adGroups()
+      .withCondition('LabelNames CONTAINS_ANY ["WeatherSensitive"]');
+  
+  var adGroups = adGroupSelector.get();
+
+  // Iterate over cities
+  for (var i = 0; i < citiesList.length; i++) {
+    // Fetch weather data for the current city
+    var weatherData = getWeather(citiesList[i].city);
+    
+    // Determine the CPC multiplier for the current weather
+    var conditionText = weatherData.current.condition.text;
+    var cpcMultiplier = weatherCPCs[conditionText];
+    
+    // Check if there is a CPC multiplier for the current weather
+    if (cpcMultiplier) {
+      // Compute the upweighted CPC
+      var upweightedCPC = citiesList[i].weight * cpcMultiplier;
+      
+      // Iterate over ad groups with the specific label and update the bids
+      while (adGroups.hasNext()) {
+        var adGroup = adGroups.next();
+        adGroup.bidding().setCpc(upweightedCPC);
+      }
+    }
+  }
+}
+
+function getCitiesFromSheet() {
+  var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Cities');
+  var data = sheet.getDataRange().getValues();
+  
+  var citiesList = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    citiesList.push({
+      city: row[0],
+      weight: parseFloat(row[1])
+    });
+  }
+  
+  return citiesList;
+}
+
+function getWeatherCPCs() {
+  var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('WeatherCPCs');
+  var data = sheet.getDataRange().getValues();
+  
+  var weatherCPCs = {};
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    weatherCPCs[row[0]] = parseFloat(row[1]);
+  }
+  
+  return weatherCPCs;
+}
+
+function getWeather(city) {
+  var url = "http://api.weatherapi.com/v1/current.json?key=" + WEATHER_API_KEY + "&q=" + city;
+  var response = UrlFetchApp.fetch(url);
+  var json = response.getContentText();
+  var data = JSON.parse(json);
+  return data;
+}
