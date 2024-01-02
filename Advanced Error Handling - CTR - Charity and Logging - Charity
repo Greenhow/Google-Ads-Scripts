@@ -1,0 +1,39 @@
+function main() {
+    try {
+        monitorKeywordPerformance();
+    } catch (e) {
+        logError(e);
+        sendErrorAlertEmail(e);
+    }
+}
+
+function monitorKeywordPerformance() {
+    var keywords = AdsApp.keywords().withCondition("Status = ENABLED").get();
+    while (keywords.hasNext()) {
+        var keyword = keywords.next();
+        var stats = keyword.getStatsFor("LAST_7_DAYS");
+        var ctr = stats.getCtr();
+
+        if (ctr < 0.01) { // Example threshold for CTR
+            var message = 'Keyword "' + keyword.getText() + '" has a low CTR of ' + ctr;
+            Logger.log(message);
+            sendPerformanceAlertEmail(keyword.getText(), ctr);
+        }
+    }
+}
+
+function logError(error) {
+    Logger.log('Error: ' + error.message);
+}
+
+function sendErrorAlertEmail(error) {
+    var subject = 'Google Ads Script Error Alert';
+    var body = 'An error occurred in the Google Ads script: ' + error.message;
+    MailApp.sendEmail('your-email@example.com', subject, body);
+}
+
+function sendPerformanceAlertEmail(keywordText, ctr) {
+    var subject = 'Keyword Performance Alert';
+    var body = 'Alert: The keyword "' + keywordText + '" has a low CTR of ' + ctr;
+    MailApp.sendEmail('your-email@example.com', subject, body);
+}
