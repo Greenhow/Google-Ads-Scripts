@@ -1,0 +1,55 @@
+function main() {
+    var campaigns = AdsApp.campaigns().get();
+    var flaggedKeywords = [];
+    var flaggedAds = [];
+
+    while (campaigns.hasNext()) {
+        var campaign = campaigns.next();
+        checkKeywordsForRelevance(campaign, flaggedKeywords);
+        checkAdsForRelevance(campaign, flaggedAds);
+    }
+
+    if (flaggedKeywords.length > 0 || flaggedAds.length > 0) {
+        sendRelevanceAlertEmail(flaggedKeywords, flaggedAds);
+    }
+}
+
+function checkKeywordsForRelevance(campaign, flaggedKeywords) {
+    var keywords = campaign.keywords().get();
+    while (keywords.hasNext()) {
+        var keyword = keywords.next();
+        // Enhanced checks for keyword relevance
+        if (!isKeywordRelevant(keyword)) {
+            flaggedKeywords.push('Keyword: ' + keyword.getText() + ' in Campaign: ' + campaign.getName());
+        }
+    }
+}
+
+function checkAdsForRelevance(campaign, flaggedAds) {
+    var ads = campaign.ads().get();
+    while (ads.hasNext()) {
+        var ad = ads.next();
+        // Enhanced checks for ad relevance
+        if (!isAdRelevant(ad)) {
+            flaggedAds.push('Ad: ' + ad.getHeadline() + ' in Campaign: ' + campaign.getName());
+        }
+    }
+}
+
+function isKeywordRelevant(keyword) {
+    // Advanced relevance checks based on keyword text, performance, and quality score
+    // Placeholder for advanced logic
+    return true;
+}
+
+function isAdRelevant(ad) {
+    // Advanced relevance checks based on ad content and performance
+    // Placeholder for advanced logic
+    return true;
+}
+
+function sendRelevanceAlertEmail(flaggedKeywords, flaggedAds) {
+    var subject = 'Ad Grants Relevance Review Alert';
+    var body = 'The following items may need review for relevance:\n\nKeywords:\n' + flaggedKeywords.join('\n') + '\n\nAds:\n' + flaggedAds.join('\n');
+    MailApp.sendEmail('your-email@example.com', subject, body);
+}
