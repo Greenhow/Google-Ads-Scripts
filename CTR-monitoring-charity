@@ -1,0 +1,48 @@
+function main() {
+    var campaigns = AdsApp.campaigns().withCondition("Status = ENABLED").get();
+    var alertMessages = [];
+
+    while (campaigns.hasNext()) {
+        var campaign = campaigns.next();
+        var campaignStats = campaign.getStatsFor("THIS_MONTH");
+        var campaignCTR = campaignStats.getCtr();
+
+        var ctrThreshold = getDynamicCTRThreshold(campaign);
+        if (campaignCTR < ctrThreshold) {
+            var message = 'Campaign "' + campaign.getName() + '" has a CTR of ' + (campaignCTR * 100).toFixed(2) + '%, which is below the dynamic threshold of ' + (ctrThreshold * 100).toFixed(2) + '%.';
+            alertMessages.push(message);
+        }
+    }
+
+    if (alertMessages.length > 0) {
+        sendAlertEmail('CTR Alert', alertMessages.join('\n\n'));
+    }
+}
+
+function getDynamicCTRThreshold(campaign) {
+    // Implement logic to set dynamic CTR thresholds based on campaign type, historical performance, etc.
+    // Placeholder for simplicity
+    return 0.05; // Default to 5%
+}
+
+function sendAlertEmail(subject, messages) {
+    MailApp.sendEmail({
+        to: "your-email@example.com",
+        subject: subject,
+        body: messages
+    });
+}
+
+// Additional Functions (placeholders) for further enhancements:
+
+function analyzeHistoricalCTR(campaign) {
+    // Analyze historical CTR data for trends or sudden changes
+}
+
+function getCampaignPerformanceSuggestions(campaign) {
+    // Generate performance improvement suggestions
+}
+
+function logCTRData(campaign, ctr) {
+    // Log CTR data for future analysis
+}
