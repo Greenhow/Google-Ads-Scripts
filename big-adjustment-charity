@@ -1,0 +1,47 @@
+function main() {
+    var dynamicThresholds = getDynamicThresholds();
+    var campaigns = AdsApp.campaigns().get();
+
+    while (campaigns.hasNext()) {
+        var campaign = campaigns.next();
+        var keywords = campaign.keywords().get();
+
+        while (keywords.hasNext()) {
+            var keyword = keywords.next();
+            var stats = keyword.getStatsFor("LAST_30_DAYS");
+            var qualityScore = keyword.getQualityScore();
+            var costPerConversion = stats.getCost() / stats.getConversions();
+
+            // Adjusting bids based on performance and quality score
+            if (stats.getCtr() >= dynamicThresholds.minCTR && stats.getConversions() >= dynamicThresholds.minConversions && qualityScore >= dynamicThresholds.minQualityScore) {
+                // Increase bid more for higher quality score and lower cost per conversion
+                adjustBid(keyword, calculateAdjustmentFactor(stats, 'increase', costPerConversion));
+            } else {
+                // Decrease bid for lower performance
+                adjustBid(keyword, calculateAdjustmentFactor(stats, 'decrease', costPerConversion));
+            }
+        }
+    }
+}
+
+function adjustBid(keyword, adjustmentFactor) {
+    var currentBid = keyword.bidding().getCpc();
+    var newBid = currentBid * adjustmentFactor;
+    keyword.bidding().setCpc(newBid);
+}
+
+function calculateAdjustmentFactor(stats, type, costPerConversion) {
+    // Advanced logic to determine bid adjustment factor
+    // Placeholder for simplicity
+    return type === 'increase' ? 1.1 : 0.9;
+}
+
+function getDynamicThresholds() {
+    // Logic to determine dynamic thresholds based on historical data
+    // Placeholder for simplicity
+    return {
+        minCTR: 0.05,
+        minConversions: 1,
+        minQualityScore: 6
+    };
+}
