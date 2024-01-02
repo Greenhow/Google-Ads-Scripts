@@ -1,0 +1,71 @@
+function main() {
+    var dailyBudget = 329; // Approximate daily budget ($10,000 / 30.4)
+    var currentSpend = getCurrentSpend();
+    var campaigns = AdsApp.campaigns().get();
+
+    while (campaigns.hasNext()) {
+        var campaign = campaigns.next();
+        var campaignSpend = campaign.getStatsFor("TODAY").getCost();
+        var remainingBudget = dailyBudget - currentSpend;
+
+        // Advanced Spend Forecasting
+        var predictedEndOfDaySpend = forecastSpend(campaign);
+
+        // Campaign Priority Handling
+        if (isPriorityCampaign(campaign) && predictedEndOfDaySpend < dailyBudget) {
+            // Increase bid for priority campaigns
+            adjustBids(campaign, 'increase');
+        } else if (predictedEndOfDaySpend >= dailyBudget) {
+            // Decrease bid or pause non-priority campaigns
+            adjustBids(campaign, 'decrease');
+            if (currentSpend + campaignSpend >= dailyBudget) {
+                campaign.pause();
+            }
+        }
+
+        // Adjust campaign budget
+        adjustCampaignBudget(campaign, remainingBudget);
+    }
+
+    // Notification System
+    if (currentSpend >= dailyBudget * 0.8) { // Threshold set to 80%
+        sendNotification("Daily spend is nearing the limit.");
+    }
+}
+
+function getCurrentSpend() {
+    var stats = AdsApp.account().getStatsFor("TODAY");
+    return stats.getCost();
+}
+
+function forecastSpend(campaign) {
+    // Logic to predict end of day spend based on historical data
+    // Placeholder for simplicity
+    return campaign.getStatsFor("TODAY").getCost();
+}
+
+function isPriorityCampaign(campaign) {
+    // Logic to determine if a campaign is a priority
+    // Placeholder for simplicity
+    return true;
+}
+
+function adjustBids(campaign, adjustmentType) {
+    var adGroups = campaign.adGroups().get();
+    while (adGroups.hasNext()) {
+        var adGroup = adGroups.next();
+        var currentBid = adGroup.bidding().getCpc();
+        var newBid = adjustmentType === 'increase' ? currentBid * 1.1 : currentBid * 0.9;
+        adGroup.bidding().setCpc(newBid);
+    }
+}
+
+function adjustCampaignBudget(campaign, remainingBudget) {
+    // Logic to adjust campaign budget
+    // Placeholder for simplicity
+}
+
+function sendNotification(message) {
+    // Logic to send an email or other form of notification
+    // Placeholder for simplicity
+}
