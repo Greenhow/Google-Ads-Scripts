@@ -1,0 +1,41 @@
+function main() {
+    var totalMonthlyBudget = 10000; // Total Google Ad Grants budget
+    var campaigns = AdsApp.campaigns().withCondition("Status = ENABLED").get();
+    var totalScore = getTotalPerformanceScore(campaigns);
+
+    while (campaigns.hasNext()) {
+        var campaign = campaigns.next();
+        var score = calculatePerformanceScore(campaign);
+        var campaignBudget = (score / totalScore) * totalMonthlyBudget;
+
+        campaign.getBudget().setAmount(campaignBudget);
+    }
+}
+
+function getTotalPerformanceScore(campaignIterator) {
+    var totalScore = 0;
+    while (campaignIterator.hasNext()) {
+        var campaign = campaignIterator.next();
+        totalScore += calculatePerformanceScore(campaign);
+    }
+    return totalScore;
+}
+
+function calculatePerformanceScore(campaign) {
+    var stats = campaign.getStatsFor("LAST_30_DAYS");
+    var conversionRate = stats.getConversionRate();
+    var qualityScore = getAverageQualityScore(campaign);
+    return conversionRate * qualityScore;
+}
+
+function getAverageQualityScore(campaign) {
+    var keywords = campaign.keywords().get();
+    var totalQualityScore = 0;
+    var keywordCount = 0;
+    while (keywords.hasNext()) {
+        var keyword = keywords.next();
+        totalQualityScore += keyword.getQualityScore();
+        keywordCount++;
+    }
+    return keywordCount > 0 ? totalQualityScore / keywordCount : 0;
+}
