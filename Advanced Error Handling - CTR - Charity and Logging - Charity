@@ -1,39 +1,28 @@
 function main() {
     try {
-        monitorKeywordPerformance();
+        checkKeywordPerformance();
     } catch (e) {
         logError(e);
-        sendErrorAlertEmail(e);
+        MailApp.sendEmail('your-email@example.com', 'Google Ads Script Error Alert', 'An error occurred in the Google Ads script: ' + e.message);
     }
 }
 
-function monitorKeywordPerformance() {
+function checkKeywordPerformance() {
     var keywords = AdsApp.keywords().withCondition("Status = ENABLED").get();
     while (keywords.hasNext()) {
         var keyword = keywords.next();
         var stats = keyword.getStatsFor("LAST_7_DAYS");
         var ctr = stats.getCtr();
 
-        if (ctr < 0.01) { // Example threshold for CTR
-            var message = 'Keyword "' + keyword.getText() + '" has a low CTR of ' + ctr;
+        if (ctr < 0.01) {
+            var message = 'Low CTR detected for Keyword: ' + keyword.getText() + ', CTR: ' + ctr;
             Logger.log(message);
-            sendPerformanceAlertEmail(keyword.getText(), ctr);
+            MailApp.sendEmail('your-email@example.com', 'Keyword Performance Alert', message);
         }
     }
 }
 
 function logError(error) {
-    Logger.log('Error: ' + error.message);
-}
-
-function sendErrorAlertEmail(error) {
-    var subject = 'Google Ads Script Error Alert';
-    var body = 'An error occurred in the Google Ads script: ' + error.message;
-    MailApp.sendEmail('your-email@example.com', subject, body);
-}
-
-function sendPerformanceAlertEmail(keywordText, ctr) {
-    var subject = 'Keyword Performance Alert';
-    var body = 'Alert: The keyword "' + keywordText + '" has a low CTR of ' + ctr;
-    MailApp.sendEmail('your-email@example.com', subject, body);
+    var logSheet = SpreadsheetApp.openById('YOUR_SPREADSHEET_ID').getSheetByName('Log');
+    logSheet.appendRow([new Date(), 'Error', error.message, error.fileName, error.lineNumber]);
 }
